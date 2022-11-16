@@ -160,7 +160,7 @@ def StraightPID_abs(degree_abs, dist, speed, slow_stop=1, Kp=0.4, Ki=0.005, Kd=0
     motor_pair = MotorPair(LeftMotorSym, RightMotorSym)
 
 
-def StraightPID_double(degree_abs, dist, speed, slow_stop=1, Kp=1, Ki=0.1, Kd=0.2):
+def StraightPID_double(degree_abs, dist, speed, slow_stop=1, Kp=1.5, Ki=0.1, Kd=0.3):
     '''
     commissioning edition StraightPID program
     move straight following specific absolute gyro degree. It use speed to adjust direction
@@ -604,19 +604,24 @@ def trip_5():
     
     StraightPID_double(0, 49, 40)
     TurningPID_abs(hitangle)
-    StraightPID_double(hitangle, 33, 40)
+    StraightPID_double(hitangle, 36, 45, slow_stop=0)
+    #TurningPID_abs(0)
     wait_for_seconds(0.5)
+    #TurningPID_abs(hitangle)
 
-    StraightPID_double(hitangle, -4, 40)
+    StraightPID_double(hitangle, -2, 40)
     wait_for_seconds(0.5)
-    StraightPID_double(hitangle, 5, 40)
+    StraightPID_double(hitangle, 3, 45, slow_stop=0)
     wait_for_seconds(0.5)
-    StraightPID_double(hitangle, -4, 40)
+    StraightPID_double(hitangle, -2, 40)
     wait_for_seconds(0.5)
-    StraightPID_double(hitangle, 5, 40)
+    StraightPID_double(hitangle, 3, 45, slow_stop=0)
     wait_for_seconds(0.5)
-    StraightPID_double(hitangle, -15, 40)
-    StraightPID_double(40, -70, 50)
+    StraightPID_double(hitangle, -2, 40)
+    wait_for_seconds(0.5)
+    StraightPID_double(hitangle, 3, 45, slow_stop=0)
+    StraightPID_double(-15, -35, 40)
+    StraightPID_double(0, -50, 50)
     
     """ StraightPID_abs(0, 49, 40)
     TurningPID_abs(hitangle)
