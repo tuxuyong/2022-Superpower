@@ -1,4 +1,4 @@
-# LEGO type:standard slot:5 autostart
+# LEGO type:standard slot:4 autostart
 
 from spike import PrimeHub, LightMatrix, Button, StatusLight, ForceSensor, MotionSensor, Speaker, ColorSensor, App, DistanceSensor, Motor, MotorPair
 from spike.control import wait_for_seconds, wait_until, Timer
@@ -160,7 +160,7 @@ def StraightPID_abs(degree_abs, dist, speed, slow_stop=1, Kp=0.4, Ki=0.005, Kd=0
     motor_pair = MotorPair(LeftMotorSym, RightMotorSym)
 
 
-def StraightPID_double(degree_abs, dist, speed, slow_stop=1, Kp=1.5, Ki=0.1, Kd=0.3):
+def StraightPID_double(degree_abs, dist, speed, slow_stop=1, Kp=1, Ki=0.1, Kd=0.2):
     '''
     commissioning edition StraightPID program
     move straight following specific absolute gyro degree. It use speed to adjust direction
@@ -601,23 +601,36 @@ def wait():
 
 
 def trip_4():
+    # push innovation project
     StraightPID_double(0, 70, 40)
-    TurningPID_abs(40)
-    StraightPID_double(40, 30, 40)
-    StraightPID_double(30, 5, -40)
-    TurningPID_abs(85)
-    StraightPID_double(85, 35, 60)
-    StraightPID_double(85, 5, -25)
-    TurningPID_abs(30)
-    StraightPID_double(32, 35, 30)
+    TurningPID_abs(45)
+    StraightPID_double(45, 35, 40)
+    StraightPID_double(45, -8, 40)
+    
+    # Hand
+    TurningPID_abs(90)
+    StraightPID_double(90, 40, 60)
+    StraightPID_double(90, -10, 40)
+    
+    # square
+    Run2line()
+    #wait_for_seconds(1)
+    #Linesquaring("White", 50, 4, "Forward")
+    
+    # solar farm
+    StraightPID_double(90, -12, 40)
+    TurningPID_abs(32)
+    StraightPID_double(32, 36, 40)
     TurningPID_abs(0)
-    StraightPID_double(0, 10, -60)
-    wait_for_seconds(1)
+    StraightPID_double(0, -8, 40)
+    wait_for_seconds(0.5)
     LeftArm.run_for_rotations(1, -100)
-    StraightPID_double(0, 40, 40)
+    wait_for_seconds(0.5)
+    StraightPID_double(-2, 27, 40)
     LeftArm.run_for_rotations(1, 100)
+    StraightPID_double(-10, -3, 30)
     TurningPID_abs(-60)
-    StraightPID_double(-60, 50, 40)
+    StraightPID_double(-60, 80, 70)  
     
 wait()
 initialize()
