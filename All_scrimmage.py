@@ -1,4 +1,4 @@
-# LEGO type:standard slot:4 autostart
+# LEGO type:standard slot:1 autostart
 
 from spike import PrimeHub, LightMatrix, Button, StatusLight, ForceSensor, MotionSensor, Speaker, ColorSensor, App, DistanceSensor, Motor, MotorPair
 from spike.control import wait_for_seconds, wait_until, Timer
@@ -210,6 +210,8 @@ def StraightPID_double(degree_abs, dist, speed, slow_stop=1, Kp=1, Ki=0.1, Kd=0.
 
     while total_dist < abs(dist):
         a_Error = a_Error * 0.75 + Error * 0.25
+        """ if total_dist <= 0.1:
+            a_Error = 0 """
         d_Error = Error - Pre_Error
         Pre_Error = Error
         C_P = Kp * Error
@@ -230,12 +232,14 @@ def StraightPID_double(degree_abs, dist, speed, slow_stop=1, Kp=1, Ki=0.1, Kd=0.
         else:
             if slow_stop == 1:
                 if abs(dist) - total_dist > 2:
-                    #motor_pair.start_tank(min(speed + C_Speed_Offset, MaxSpeed), speed)
-                    motor_pair.start_tank(speed + C_Speed_Offset, speed)
+                    motor_pair.start_tank(speed + C_Speed_Offset, speed )
+                    #motor_pair.start_tank(speed + C_Speed_Offset, speed - C_Speed_Offset)
                 else:
                     motor_pair.start_tank(min(20 + C_Speed_Offset_slow, 22), 20)
+                    #motor_pair.start_tank(20, 20)
             else:
                 motor_pair.start_tank(min(speed + C_Speed_Offset, MaxSpeed), speed)
+                #motor_pair.start_tank(speed + C_Speed_Offset, speed - C_Speed_Offset)
 
         # in case robot got stuck
         degree_temp = abs(LeftMotor.get_degrees_counted())
@@ -282,13 +286,13 @@ def TurningPID_abs(degree_abs, Kp=0.8, Ki=0.01, Kd=2, MinPower=20, MaxPower=30):
     Pre_Error = 0
 
     # setting based on experiment
-    allowance = 5
+    allowance = 2
     hit_target, Error = on_target(degree_abs, allowance)
 
-    if abs(math.floor(Error + 5)) <= 70:
-        allowance = abs(math.floor((Error + 5) / 10))
+    if abs(math.floor(Error + 2)) <= 70:
+        allowance = abs(math.floor((Error + 2) / 10))
     else:
-        allowance = 5
+        allowance = 2
 
     motor_pair.set_stop_action("hold")
     motor_pair.stop()
@@ -680,22 +684,28 @@ def trip_5():
     
     StraightPID_double(0, 49, 40)
     TurningPID_abs(hitangle)
-    StraightPID_double(hitangle, 36, 45, slow_stop=0)
-    #TurningPID_abs(0)
+    wait_for_seconds(0.5)
+    TurningPID_abs(hitangle)
+    StraightPID_double(hitangle, 36, 50, slow_stop=0)
     wait_for_seconds(0.5)
     #TurningPID_abs(hitangle)
 
-    StraightPID_double(hitangle, -2, 40)
+    StraightPID_double(hitangle, -3, 40)
+    #wait_for_seconds(0.5)
+    #TurningPID_abs(hitangle)
+    StraightPID_double(hitangle, 3.5, 50, slow_stop=0)
+    
     wait_for_seconds(0.5)
-    StraightPID_double(hitangle, 3, 45, slow_stop=0)
+    StraightPID_double(hitangle, -3, 40)
+    #wait_for_seconds(0.5)
+    #TurningPID_abs(hitangle)
+    StraightPID_double(hitangle, 3.5, 50, slow_stop=0)
+    
     wait_for_seconds(0.5)
-    StraightPID_double(hitangle, -2, 40)
-    wait_for_seconds(0.5)
-    StraightPID_double(hitangle, 3, 45, slow_stop=0)
-    wait_for_seconds(0.5)
-    StraightPID_double(hitangle, -2, 40)
-    wait_for_seconds(0.5)
-    StraightPID_double(hitangle, 3, 45, slow_stop=0)
+    StraightPID_double(hitangle, -3, 40)
+    #wait_for_seconds(0.5)
+    #TurningPID_abs(hitangle)
+    StraightPID_double(hitangle, 3.5, 45, slow_stop=0)
     StraightPID_double(-15, -35, 40)
     StraightPID_double(0, -50, 50)
     
