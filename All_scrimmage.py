@@ -608,7 +608,11 @@ def trip_1():
 
     #Navigate to windmill
     TurningPID_abs(-45)
+    wait_for_seconds(0.5)
+    TurningPID_abs(-45)
     StraightPID_double(-45, 41, 40)
+    TurningPID_abs(45)
+    wait_for_seconds(0.5)
     TurningPID_abs(45)
 
     #Windmill mission
@@ -628,6 +632,8 @@ def trip_1():
     motor_pair.move_tank(1.5, "seconds", -45, -45)
     StraightPID_double(45, 2, 45)
     TurningPID_abs(-40)
+    wait_for_seconds(0.5)
+    TurningPID_abs(-40)
     StraightPID_double(-40, 32, 40)
 
     #Hybrid Car mission
@@ -637,7 +643,7 @@ def trip_1():
     #wait_for_seconds(0.5)
 
     #Back to Base
-    motor_pair.move_tank(6, "seconds", -40, -40)
+    motor_pair.move_tank(6, "seconds", -60, -60)
 
 def trip_2():
     StraightPID_double(0, 45, 40)
@@ -649,12 +655,14 @@ def trip_2():
 
 def trip_4():
     # push innovation project
-    StraightPID_double(0, 70, 40)
+    StraightPID_double(0, 72, 40)
     TurningPID_abs(45)
     StraightPID_double(45, 35, 40)
     StraightPID_double(45, -8, 40)
     
     # Hand
+    TurningPID_abs(90)
+    wait_for_seconds(0.5)
     TurningPID_abs(90)
     StraightPID_double(90, 40, 60)
     StraightPID_double(90, -10, 40)
@@ -720,7 +728,7 @@ trip_2()
 
 wait()
 initialize()
-trip_4()
+trip_4() 
 
 wait()
 initialize()
