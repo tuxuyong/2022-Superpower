@@ -1,4 +1,4 @@
-# LEGO type:standard slot:19 autostart
+# LEGO type:standard slot:1 autostart
 
 from spike import PrimeHub, LightMatrix, Button, StatusLight, ForceSensor, MotionSensor, Speaker, ColorSensor, App, DistanceSensor, Motor, MotorPair
 from spike.control import wait_for_seconds, wait_until, Timer
@@ -25,7 +25,7 @@ LeftColor = ColorSensor(LeftColorSym)
 RightColor = ColorSensor(RightColorSym)
 
 # WHEEL_DIAMETER = 8.8 large wheel
-WHEEL_DIAMETER = 6.24 # medium wheel
+WHEEL_DIAMETER = 5.6# medium wheel
 ANGLE2DIS = WHEEL_DIAMETER * math.pi / 360
 WHITE = 98
 BLACK = 18
@@ -40,11 +40,6 @@ def initialize():
     MotionSensor.reset_yaw_angle()
     motor_pair.set_stop_action('hold')
 
-def trip_ready():
-    hub.light_matrix.show_image('HAPPY')
-    
-def trip_inprogress():
-    hub.light_matrix.show_image('DIAMOND')
 
 def on_target(target, allowance):
     '''
@@ -63,9 +58,8 @@ def on_target(target, allowance):
     return (True, res) if res >= -allowance and res <= allowance else (False, res)
 
 
-def StraightPID_left(degree_abs, dist, speed, slow_stop=1, Kp=0.8, Ki=0.05, Kd=0.4):
+def StraightPID_abs(degree_abs, dist, speed, slow_stop=1, Kp=0.4, Ki=0.005, Kd=0.8):
     '''
-    commissioning edition StraightPID program
     move straight following specific absolute gyro degree. It use speed to adjust direction
 
     Parameters
@@ -87,8 +81,8 @@ def StraightPID_left(degree_abs, dist, speed, slow_stop=1, Kp=0.8, Ki=0.05, Kd=0
     degree_pre = 0
     a_Error = 0
     Pre_Error = 0
-    RightMotor.set_degrees_counted(0)
-    MaxSpeed = math.floor(speed * 5)
+    LeftMotor.set_degrees_counted(0)
+    MaxSpeed = math.floor(speed * 1.1)
 
     degree_abs = degree_abs % 360
     Yaw = MotionSensor.get_yaw_angle()
@@ -112,35 +106,37 @@ def StraightPID_left(degree_abs, dist, speed, slow_stop=1, Kp=0.8, Ki=0.05, Kd=0
     motor_pair.set_stop_action('hold')
 
     while total_dist < abs(dist):
-        a_Error = a_Error * 0.75 + Error
+        a_Error = a_Error * 0.75 + Error * 0.25
         d_Error = Error - Pre_Error
         Pre_Error = Error
         C_P = Kp * Error
         C_I = Ki * a_Error
         C_D = Kd * d_Error
         C_Turn = C_P + C_I + C_D
-        #C_Turn = C_Turn * 1
+        C_Turn = C_Turn * 1
         if C_Turn > 0:
             C_Speed_Offset = math.ceil(C_Turn)
-            C_Speed_Offset_slow = math.ceil(C_Turn*0.5)
+            C_Speed_Offset_slow = math.ceil(C_Turn*0.7)
         else:
             C_Speed_Offset = math.floor(C_Turn)
-            C_Speed_Offset_slow = math.floor(C_Turn*0.5)
+            C_Speed_Offset_slow = math.floor(C_Turn*0.7)
 
         # Slow Start
-        if total_dist <= 0.5:
-            motor_pair.start_tank(20 + C_Speed_Offset_slow, 20)
+        if total_dist > 0.5:
+            motor_pair.start_tank(min(speed + C_Speed_Offset, MaxSpeed), speed)
         else:
-            if slow_stop == 1:
-                if abs(dist) - total_dist > 2:
-                    motor_pair.start_tank(speed + C_Speed_Offset, speed)
-                else:
-                    motor_pair.start_tank(15 + C_Speed_Offset_slow, 15)
+            motor_pair.start_tank(20 + C_Speed_Offset_slow, 20)
+        # Slow Stop
+        if slow_stop == 1:
+            if abs(dist) - total_dist > 4:
+                motor_pair.start_tank(min(speed + C_Speed_Offset, MaxSpeed), speed)
             else:
-                motor_pair.start_tank(speed + C_Speed_Offset, speed)
+                motor_pair.start_tank(min(20 + C_Speed_Offset_slow, 22), 20)
+        else:
+            motor_pair.start_tank(min(speed + C_Speed_Offset, MaxSpeed), speed)
 
         # in case robot got stuck
-        degree_temp = abs(RightMotor.get_degrees_counted())
+        degree_temp = abs(LeftMotor.get_degrees_counted())
         total_dist = degree_temp * ANGLE2DIS
         if count % 10 == 0 and total_dist > 2:
             if degree_temp - degree_pre < 1 :
@@ -163,7 +159,8 @@ def StraightPID_left(degree_abs, dist, speed, slow_stop=1, Kp=0.8, Ki=0.05, Kd=0
     motor_pair.stop()
     motor_pair = MotorPair(LeftMotorSym, RightMotorSym)
 
-def StraightPID_right(degree_abs, dist, speed, slow_stop=1, Kp=0.8, Ki=0.05, Kd=0.4):
+
+def StraightPID_double(degree_abs, dist, speed, slow_stop=1, Kp=1, Ki=0.1, Kd=0.2):
     '''
     commissioning edition StraightPID program
     move straight following specific absolute gyro degree. It use speed to adjust direction
@@ -212,7 +209,9 @@ def StraightPID_right(degree_abs, dist, speed, slow_stop=1, Kp=0.8, Ki=0.05, Kd=
     motor_pair.set_stop_action('hold')
 
     while total_dist < abs(dist):
-        a_Error = a_Error * 0.75 + Error
+        a_Error = a_Error * 0.75 + Error * 0.25
+        """ if total_dist <= 0.1:
+            a_Error = 0 """
         d_Error = Error - Pre_Error
         Pre_Error = Error
         C_P = Kp * Error
@@ -222,23 +221,25 @@ def StraightPID_right(degree_abs, dist, speed, slow_stop=1, Kp=0.8, Ki=0.05, Kd=
         #C_Turn = C_Turn * 1
         if C_Turn > 0:
             C_Speed_Offset = math.ceil(C_Turn)
-            C_Speed_Offset_slow = math.ceil(C_Turn*0.5)
+            C_Speed_Offset_slow = math.ceil(C_Turn*0.7)
         else:
             C_Speed_Offset = math.floor(C_Turn)
-            C_Speed_Offset_slow = math.floor(C_Turn*0.5)
+            C_Speed_Offset_slow = math.floor(C_Turn*0.7)
 
         # Slow Start
         if total_dist <= 0.5:
-            motor_pair.start_tank(20, 20 - C_Speed_Offset_slow)
+            motor_pair.start_tank(20 + C_Speed_Offset_slow, 20)
         else:
             if slow_stop == 1:
                 if abs(dist) - total_dist > 2:
-                    #motor_pair.start_tank(min(speed + C_Speed_Offset, MaxSpeed), speed)
-                    motor_pair.start_tank(speed , speed - C_Speed_Offset)
+                    motor_pair.start_tank(speed + C_Speed_Offset, speed )
+                    #motor_pair.start_tank(speed + C_Speed_Offset, speed - C_Speed_Offset)
                 else:
-                    motor_pair.start_tank(15, 15 - C_Speed_Offset_slow)
+                    motor_pair.start_tank(min(20 + C_Speed_Offset_slow, 22), 20)
+                    #motor_pair.start_tank(20, 20)
             else:
-                motor_pair.start_tank(speed, speed - C_Speed_Offset)
+                motor_pair.start_tank(min(speed + C_Speed_Offset, MaxSpeed), speed)
+                #motor_pair.start_tank(speed + C_Speed_Offset, speed - C_Speed_Offset)
 
         # in case robot got stuck
         degree_temp = abs(LeftMotor.get_degrees_counted())
@@ -263,110 +264,9 @@ def StraightPID_right(degree_abs, dist, speed, slow_stop=1, Kp=0.8, Ki=0.05, Kd=
 
     motor_pair.stop()
     motor_pair = MotorPair(LeftMotorSym, RightMotorSym)
+    
 
-def StraightPID_double(degree_abs, dist, speed, slow_stop=1, Kp=1, Ki=0.05, Kd=0.5):
-    '''
-    commissioning edition StraightPID program
-    move straight following specific absolute gyro degree. It use speed to adjust direction
-
-    Parameters
-    degree_abs: absolute gyro degree to follow
-    dist: distance to travel in cm
-    speed:speed to travel, 0-100
-    slow_stop: flag to define if slow stop will be applied at end of travel
-            default is true
-    Kp: Kp PID parameter, default 0.4
-    Ki: Ki PID parameter, default 0.005
-    Kd: Kd PID parameter, default 0.8
-    '''
-    global motor_pair
-
-    count = 0
-    count_temp = 0
-    total_dist = 0
-    degree_temp = 0
-    degree_pre = 0
-    a_Error = 0
-    Pre_Error = 0
-    RightMotor.set_degrees_counted(0)
-    MaxSpeed = math.floor(speed * 5)
-
-    degree_abs = degree_abs % 360
-    Yaw = MotionSensor.get_yaw_angle()
-    # Convert input from 360 scale to +/-180 scale
-    if degree_abs > 179:
-        degree_abs = degree_abs - 360
-    else:
-        degree_abs = degree_abs
-
-    # Calculate Error between two +/-180 scale values
-    Error = degree_abs - Yaw
-    if Error > 180:
-        Error = Error - 360
-    elif Error < -180:
-        Error = Error + 360
-
-    if dist < 0:
-        motor_pair = MotorPair(RightMotorSym, LeftMotorSym)
-    else:
-        motor_pair = MotorPair(LeftMotorSym, RightMotorSym)
-    motor_pair.set_stop_action('hold')
-
-    while total_dist < abs(dist):
-        a_Error = a_Error * 0.75 + Error
-        d_Error = Error - Pre_Error
-        Pre_Error = Error
-        C_P = Kp * Error
-        C_I = Ki * a_Error
-        C_D = Kd * d_Error
-        C_Turn = C_P + C_I + C_D
-        C_Turn = C_Turn * 0.5
-        #C_Turn = C_Turn * 1
-        if C_Turn > 0:
-            C_Speed_Offset = math.ceil(C_Turn)
-            C_Speed_Offset_slow = math.ceil(C_Turn*0.5)
-        else:
-            C_Speed_Offset = math.floor(C_Turn)
-            C_Speed_Offset_slow = math.floor(C_Turn*0.5)
-
-        # Slow Start
-        if total_dist <= 0.5:
-            motor_pair.start_tank(20 + C_Speed_Offset_slow, 20 - C_Speed_Offset_slow)
-        else:
-            if slow_stop == 1:
-                if abs(dist) - total_dist > 2:
-                    #motor_pair.start_tank(min(speed + C_Speed_Offset, MaxSpeed), speed)
-                    motor_pair.start_tank(speed + C_Speed_Offset, speed - C_Speed_Offset)
-                else:
-                    motor_pair.start_tank(15 + C_Speed_Offset_slow, 15 - C_Speed_Offset_slow)
-            else:
-                motor_pair.start_tank(speed + C_Speed_Offset, speed - C_Speed_Offset)
-
-        # in case robot got stuck
-        degree_temp = abs(RightMotor.get_degrees_counted())
-        total_dist = degree_temp * ANGLE2DIS
-        if count % 10 == 0 and total_dist > 2:
-            if degree_temp - degree_pre < 1 :
-                count_temp = count_temp + 1
-                degree_pre = degree_temp
-            else:
-                degree_pre = degree_temp
-
-        if count_temp > 3:
-            break
-
-        count = count + 1
-        Yaw = MotionSensor.get_yaw_angle()
-        Error = degree_abs - Yaw
-        if Error > 180:
-            Error = Error - 360
-        elif Error < -180:
-            Error = Error + 360
-
-    motor_pair.stop()
-    motor_pair = MotorPair(LeftMotorSym, RightMotorSym)
-
-def TurningPID_abs(degree_abs, Kp=2, Ki=0.01, Kd=5, MinPower=20, MaxPower=35):
+def TurningPID_abs(degree_abs, Kp=0.8, Ki=0.01, Kd=2, MinPower=20, MaxPower=30):
     '''
     Turning with PID using power
 
@@ -386,13 +286,13 @@ def TurningPID_abs(degree_abs, Kp=2, Ki=0.01, Kd=5, MinPower=20, MaxPower=35):
     Pre_Error = 0
 
     # setting based on experiment
-    allowance = 5
+    allowance = 2
     hit_target, Error = on_target(degree_abs, allowance)
 
-    if abs(math.floor(Error + 1)) <= 70:
-        allowance = abs(math.floor((Error + 1) / 10))
+    if abs(math.floor(Error + 2)) <= 70:
+        allowance = abs(math.floor((Error + 2) / 10))
     else:
-        allowance = 5
+        allowance = 2
 
     motor_pair.set_stop_action("hold")
     motor_pair.stop()
@@ -410,7 +310,7 @@ def TurningPID_abs(degree_abs, Kp=2, Ki=0.01, Kd=5, MinPower=20, MaxPower=35):
 
         if (not hit_target):
             steering = 100 if Error >= 0 else -100
-            C_Turn = math.floor(abs(C_Turn))
+            C_Turn = abs(C_Turn)
             C_Turn = min(MaxPower, C_Turn)
             power = min(max(math.floor(C_Turn), MinPower), MaxPower)
             motor_pair.start_at_power(power, steering)
@@ -418,113 +318,7 @@ def TurningPID_abs(degree_abs, Kp=2, Ki=0.01, Kd=5, MinPower=20, MaxPower=35):
             motor_pair.stop()
             break
 
-# Turn with both wheels
-def Turn(degree):
-    TurningPID_abs(degree)
-    wait_for_seconds(0.3)
-    TurningPID_abs(degree)
 
-def TurningPID_l(degree_abs, Kp=2, Ki=0.01, Kd=5, MinPower=20, MaxPower=35):
-    global a_Error, Pre_Error, motor_pair
-    RightMotor.set_stop_action("brake")
-    RightMotor.stop()
-    count = 0
-    flag = 0
-    a_Error = 0
-    Pre_Error = 0
- 
-    allowance = 2
-    hit_target, Error = on_target(degree_abs, allowance)
-    #redefine allowance based on the angle (or Error) robot need to make
-    if abs(math.floor(Error + 5)) <= 70:
-       allowance = abs(math.floor((Error + 5) / 10) )
-    else:
-       allowance = 2
-
-    while True:        
-        hit_target, Error = on_target(degree_abs, allowance)
-        a_Error = a_Error + Error
-        d_Error = Error - Pre_Error
-        Pre_Error = Error
-        C_P = Kp * Error
-        C_I = Ki * a_Error
-        C_D = Kd * d_Error
-        C_Turn = C_P + C_I + C_D
-        count = count + 1
-       
-        if (not hit_target):
-            #steering = 100 if Error >= 0 else -100
-            C_Turn = abs(C_Turn)
-            C_Turn = min(MaxPower, C_Turn)
-            power = min(max(math.floor(C_Turn), MinPower), MaxPower)
-            #print("start_at_power at power", power, ":", Error)
-            #motor_pair.start_at_power(power, steering)
-            if (Error >=0):
-                LeftMotor.start_at_power(-power)
-            else:
-                LeftMotor.start_at_power(power)
-            #motor_pair.start_tank_at_power(max(math.floor(C_Turn), MinPower), -max(math.floor(C_Turn), MinPower))
-        else:
-            motor_pair.stop()
-            break
-
-def Turn_l(degree):
-    TurningPID_l(degree)
-    wait_for_seconds(0.3)
-    TurningPID_l(degree)
-
-def TurningPID_r(degree_abs, Kp=2, Ki=0.01, Kd=5, MinPower=20, MaxPower=35):
-    global a_Error, Pre_Error, motor_pair
-    LeftMotor.set_stop_action("brake")
-    LeftMotor.stop()
-    count = 0
-    flag = 0
-    a_Error = 0
-    Pre_Error = 0
- 
-    allowance = 2
-    hit_target, Error = on_target(degree_abs, allowance)
-    #redefine allowance based on the angle (or Error) robot need to make
-    if abs(math.floor(Error + 1)) <= 70:
-       allowance = abs(math.floor((Error + 1) / 10) )
-    else:
-       allowance = 2
-
-    while True:        
-        hit_target, Error = on_target(degree_abs, allowance)
-        a_Error = a_Error + Error
-        d_Error = Error - Pre_Error
-        Pre_Error = Error
-        C_P = Kp * Error
-        C_I = Ki * a_Error
-        C_D = Kd * d_Error
-        C_Turn = C_P + C_I + C_D
-        count = count + 1
-       
-        if (not hit_target):
-            #steering = 100 if Error >= 0 else -100
-            C_Turn = abs(C_Turn)
-            C_Turn = min(MaxPower, C_Turn)
-            power = min(max(math.floor(C_Turn), MinPower), MaxPower)
-            #print("start_at_power at power", power, ":", Error)
-            #motor_pair.start_at_power(power, steering)
-            if (Error >=0):
-                RightMotor.start_at_power(-power)
-            else:
-                RightMotor.start_at_power(power)
-            #motor_pair.start_tank_at_power(max(math.floor(C_Turn), MinPower), -max(math.floor(C_Turn), MinPower))
-        else:
-            motor_pair.stop()
-            break
-
-def Turn_r(degree):
-    TurningPID_r(degree)
-    wait_for_seconds(0.3)
-    print(MotionSensor.get_yaw_angle())
-    TurningPID_r(degree)
-    wait_for_seconds(0.3)
-    print(MotionSensor.get_yaw_angle())
-    
 def Run2line(whichcolorsensor='Right', speed=30, direction='Forward', line_color='black'):
     '''
     Run robot until hitting line on line_color.
@@ -559,7 +353,7 @@ def Run2line(whichcolorsensor='Right', speed=30, direction='Forward', line_color
 
     motor_pair = MotorPair(LeftMotorSym, RightMotorSym)
 
-""" def Linesquaring(targetcolor='Black', targetintensity=30, int_range=5, direction="Forward"):
+def Linesquaring(targetcolor='Black', targetintensity=30, int_range=5, direction="Forward"):
     '''
     Use both Color Sensors and Gyro Sensors to squre an edge towards
     "targetcolor", either from White to Black or Black to White with PID,
@@ -712,10 +506,10 @@ def Run2line(whichcolorsensor='Right', speed=30, direction='Forward', line_color
             elif Left_int > Max and Right_int > Max:
                 motor_pair.start_tank(Lspeed, Rspeed)
 
-    motor_pair = MotorPair(LeftMotorSym, RightMotorSym) """
+    motor_pair = MotorPair(LeftMotorSym, RightMotorSym)
 
 
-""" def Linetracing_coloronly(dist, power, whichcolorsensor='Right', targetintensity=50, Kp=0.5, Ki=0, Kd=10):
+def Linetracing_coloronly(dist, power, whichcolorsensor='Right', targetintensity=50, Kp=0.5, Ki=0, Kd=10):
     '''
     Moves robot by tracing the line using color intensity
 
@@ -798,7 +592,7 @@ def Run2line(whichcolorsensor='Right', speed=30, direction='Forward', line_color
             break
 
     motor_pair.stop()
-    motor_pair = MotorPair(LeftMotorSym, RightMotorSym) """
+    motor_pair = MotorPair(LeftMotorSym, RightMotorSym)
 
 
 def wait():
@@ -807,14 +601,18 @@ def wait():
     '''
     Hub.left_button.wait_until_pressed()
 
-""" def trip_1():
+def trip_1():
     #Push the television and go back
     motor_pair.move_tank(2.5, "seconds", 30, 30)
     motor_pair.move_tank(5, "cm", -30, -30)
 
     #Navigate to windmill
     TurningPID_abs(-45)
+    wait_for_seconds(0.5)
+    TurningPID_abs(-45)
     StraightPID_double(-45, 41, 40)
+    TurningPID_abs(45)
+    wait_for_seconds(0.5)
     TurningPID_abs(45)
 
     #Windmill mission
@@ -834,6 +632,8 @@ def wait():
     motor_pair.move_tank(1.5, "seconds", -45, -45)
     StraightPID_double(45, 2, 45)
     TurningPID_abs(-40)
+    wait_for_seconds(0.5)
+    TurningPID_abs(-40)
     StraightPID_double(-40, 32, 40)
 
     #Hybrid Car mission
@@ -843,7 +643,7 @@ def wait():
     #wait_for_seconds(0.5)
 
     #Back to Base
-    motor_pair.move_tank(6, "seconds", -40, -40)
+    motor_pair.move_tank(6, "seconds", -60, -60)
 
 def trip_2():
     StraightPID_double(0, 45, 40)
@@ -855,12 +655,14 @@ def trip_2():
 
 def trip_4():
     # push innovation project
-    StraightPID_double(0, 70, 40)
+    StraightPID_double(0, 72, 40)
     TurningPID_abs(45)
     StraightPID_double(45, 35, 40)
     StraightPID_double(45, -8, 40)
     
     # Hand
+    TurningPID_abs(90)
+    wait_for_seconds(0.5)
     TurningPID_abs(90)
     StraightPID_double(90, 40, 60)
     StraightPID_double(90, -10, 40)
@@ -890,52 +692,33 @@ def trip_5():
     
     StraightPID_double(0, 49, 40)
     TurningPID_abs(hitangle)
-    StraightPID_double(hitangle, 36, 45, slow_stop=0)
-    #TurningPID_abs(0)
+    wait_for_seconds(0.5)
+    TurningPID_abs(hitangle)
+    StraightPID_double(hitangle, 36, 50, slow_stop=0)
     wait_for_seconds(0.5)
     #TurningPID_abs(hitangle)
 
-    StraightPID_double(hitangle, -2, 40)
+    StraightPID_double(hitangle, -3, 40)
+    #wait_for_seconds(0.5)
+    #TurningPID_abs(hitangle)
+    StraightPID_double(hitangle, 3.5, 50, slow_stop=0)
+    
     wait_for_seconds(0.5)
-    StraightPID_double(hitangle, 3, 45, slow_stop=0)
+    StraightPID_double(hitangle, -3, 40)
+    #wait_for_seconds(0.5)
+    #TurningPID_abs(hitangle)
+    StraightPID_double(hitangle, 3.5, 50, slow_stop=0)
+    
     wait_for_seconds(0.5)
-    StraightPID_double(hitangle, -2, 40)
-    wait_for_seconds(0.5)
-    StraightPID_double(hitangle, 3, 45, slow_stop=0)
-    wait_for_seconds(0.5)
-    StraightPID_double(hitangle, -2, 40)
-    wait_for_seconds(0.5)
-    StraightPID_double(hitangle, 3, 45, slow_stop=0)
+    StraightPID_double(hitangle, -3, 40)
+    #wait_for_seconds(0.5)
+    #TurningPID_abs(hitangle)
+    StraightPID_double(hitangle, 3.5, 45, slow_stop=0)
     StraightPID_double(-15, -35, 40)
-    StraightPID_double(0, -50, 50) """
+    StraightPID_double(0, -50, 50)
     
-
-def commission_turning():
-    # TurningPID_abs(-90)
-    # wait_for_seconds(0.3)
-    # print(MotionSensor.get_yaw_angle())
-    # TurningPID_abs(-90)
-    # wait_for_seconds(0.5)
-    # print(MotionSensor.get_yaw_angle())
-    Turn(-90)
-    wait_for_seconds(0.5)
-    print(MotionSensor.get_yaw_angle())
-    StraightPID_right(-90, 50, 40)
-    Turn(0)
-    wait_for_seconds(0.5)
-    print(MotionSensor.get_yaw_angle())
-    StraightPID_right(0, 50, 40)
-    print(MotionSensor.get_yaw_angle())
-    
-def commission_straightPID():
-    StraightPID_right(0, 100, 30)
-    wait_for_seconds(0.5)
-    print(MotionSensor.get_yaw_angle())
-    
-
-
 #Whole run
-""" wait()
+wait()
 initialize()
 trip_1()
 
@@ -945,15 +728,8 @@ trip_2()
 
 wait()
 initialize()
-trip_4()
+trip_4() 
 
 wait()
 initialize()
-trip_5() """
-
-wait()
-trip_inprogress()
-initialize()
-#commission_turning()
-commission_straightPID()
-trip_ready()
+trip_5()

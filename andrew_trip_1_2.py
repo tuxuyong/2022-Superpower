@@ -1,12 +1,7 @@
-# LEGO type:standard slot:4 autostart
-
-from spike import PrimeHub, LightMatrix, Button, StatusLight, ForceSensor, MotionSensor, Speaker, ColorSensor, App, DistanceSensor, Motor, MotorPair
-from spike.control import wait_for_seconds, wait_until, Timer
+from spike import PrimeHub, MotionSensor
+from spike import Motor, MotorPair, ColorSensor
+from spike.control import wait_for_seconds
 import math
-
-hub = PrimeHub()
-
-hub.light_matrix.show_image('HAPPY')
 
 LeftMotorSym = 'F'
 RightMotorSym = 'A'
@@ -18,9 +13,9 @@ MotionSensor = MotionSensor()
 motor_pair = MotorPair(LeftMotorSym, RightMotorSym)
 LeftMotor = Motor(LeftMotorSym)
 RightMotor = Motor(RightMotorSym)
-LeftArm = Motor('C')
+LeftArm = Motor('D')
 LeftArm.set_stop_action("hold")
-RightArm = Motor('D')
+RightArm = Motor('C')
 LeftColor = ColorSensor(LeftColorSym)
 RightColor = ColorSensor(RightColorSym)
 
@@ -159,108 +154,6 @@ def StraightPID_abs(degree_abs, dist, speed, slow_stop=1, Kp=0.4, Ki=0.005, Kd=0
     motor_pair.stop()
     motor_pair = MotorPair(LeftMotorSym, RightMotorSym)
 
-
-def StraightPID_double(degree_abs, dist, speed, slow_stop=1, Kp=1, Ki=0.1, Kd=0.2):
-    '''
-    commissioning edition StraightPID program
-    move straight following specific absolute gyro degree. It use speed to adjust direction
-
-    Parameters
-    degree_abs: absolute gyro degree to follow
-    dist: distance to travel in cm
-    speed:speed to travel, 0-100
-    slow_stop: flag to define if slow stop will be applied at end of travel
-            default is true
-    Kp: Kp PID parameter, default 0.4
-    Ki: Ki PID parameter, default 0.005
-    Kd: Kd PID parameter, default 0.8
-    '''
-    global motor_pair
-
-    count = 0
-    count_temp = 0
-    total_dist = 0
-    degree_temp = 0
-    degree_pre = 0
-    a_Error = 0
-    Pre_Error = 0
-    LeftMotor.set_degrees_counted(0)
-    MaxSpeed = math.floor(speed * 5)
-
-    degree_abs = degree_abs % 360
-    Yaw = MotionSensor.get_yaw_angle()
-    # Convert input from 360 scale to +/-180 scale
-    if degree_abs > 179:
-        degree_abs = degree_abs - 360
-    else:
-        degree_abs = degree_abs
-
-    # Calculate Error between two +/-180 scale values
-    Error = degree_abs - Yaw
-    if Error > 180:
-        Error = Error - 360
-    elif Error < -180:
-        Error = Error + 360
-
-    if dist < 0:
-        motor_pair = MotorPair(RightMotorSym, LeftMotorSym)
-    else:
-        motor_pair = MotorPair(LeftMotorSym, RightMotorSym)
-    motor_pair.set_stop_action('hold')
-
-    while total_dist < abs(dist):
-        a_Error = a_Error * 0.75 + Error * 0.25
-        d_Error = Error - Pre_Error
-        Pre_Error = Error
-        C_P = Kp * Error
-        C_I = Ki * a_Error
-        C_D = Kd * d_Error
-        C_Turn = C_P + C_I + C_D
-        #C_Turn = C_Turn * 1
-        if C_Turn > 0:
-            C_Speed_Offset = math.ceil(C_Turn)
-            C_Speed_Offset_slow = math.ceil(C_Turn*0.7)
-        else:
-            C_Speed_Offset = math.floor(C_Turn)
-            C_Speed_Offset_slow = math.floor(C_Turn*0.7)
-
-        # Slow Start
-        if total_dist <= 0.5:
-            motor_pair.start_tank(20 + C_Speed_Offset_slow, 20)
-        else:
-            if slow_stop == 1:
-                if abs(dist) - total_dist > 2:
-                    #motor_pair.start_tank(min(speed + C_Speed_Offset, MaxSpeed), speed)
-                    motor_pair.start_tank(speed + C_Speed_Offset, speed)
-                else:
-                    motor_pair.start_tank(min(20 + C_Speed_Offset_slow, 22), 20)
-            else:
-                motor_pair.start_tank(min(speed + C_Speed_Offset, MaxSpeed), speed)
-
-        # in case robot got stuck
-        degree_temp = abs(LeftMotor.get_degrees_counted())
-        total_dist = degree_temp * ANGLE2DIS
-        if count % 10 == 0 and total_dist > 2:
-            if degree_temp - degree_pre < 1 :
-                count_temp = count_temp + 1
-                degree_pre = degree_temp
-            else:
-                degree_pre = degree_temp
-
-        if count_temp > 3:
-            break
-
-        count = count + 1
-        Yaw = MotionSensor.get_yaw_angle()
-        Error = degree_abs - Yaw
-        if Error > 180:
-            Error = Error - 360
-        elif Error < -180:
-            Error = Error + 360
-
-    motor_pair.stop()
-    motor_pair = MotorPair(LeftMotorSym, RightMotorSym)
-    
 
 def TurningPID_abs(degree_abs, Kp=0.8, Ki=0.01, Kd=2, MinPower=20, MaxPower=30):
     '''
@@ -598,40 +491,49 @@ def wait():
     Hub.left_button.wait_until_pressed()
 
 
+#Trip code
 
+def trip_1():
+    #Push the television and go back
+    motor_pair.move_tank(2.5, "seconds", 30, 30)
+    motor_pair.move_tank(5, "cm", -30, -30)
 
-def trip_4():
-    # push innovation project
-    StraightPID_double(0, 70, 40)
+    #Navigate to windmill
+    TurningPID_abs(-45)
+    StraightPID_abs(-45, 41, 40, slow_stop=1)
     TurningPID_abs(45)
-    StraightPID_double(45, 35, 40)
-    StraightPID_double(45, -8, 40)
-    
-    # Hand
-    TurningPID_abs(90)
-    StraightPID_double(90, 40, 60)
-    StraightPID_double(90, -10, 40)
-    
-    # square
-    Run2line()
-    #wait_for_seconds(1)
-    #Linesquaring("White", 50, 4, "Forward")
-    
-    # solar farm
-    StraightPID_double(90, -12, 40)
-    TurningPID_abs(32)
-    StraightPID_double(32, 36, 40)
-    TurningPID_abs(0)
-    StraightPID_double(0, -8, 40)
-    wait_for_seconds(0.5)
-    LeftArm.run_for_rotations(1, -100)
-    wait_for_seconds(0.5)
-    StraightPID_double(-2, 27, 40)
-    LeftArm.run_for_rotations(1, 100)
-    StraightPID_double(-10, -3, 30)
-    TurningPID_abs(-60)
-    StraightPID_double(-60, 80, 70)  
-    
-wait()
+
+    #Windmill mission
+    i = 1
+    while i<4:
+        if i==1:
+            motor_pair.move_tank(25, "cm", 60, 60)
+        elif i==5:
+            motor_pair.move_tank(29, "cm", 60, 60)
+        else:
+            motor_pair.move_tank(27.5, "cm", 60, 60)
+        motor_pair.move_tank(14, "cm", -40, -40)
+        wait_for_seconds(1)
+        i = i+1
+
+    #Navigating to Hybrid Car & doing Rechargable Battery
+    motor_pair.move_tank(1.5, "seconds", -45, -45)
+    StraightPID_abs(45, 2, 45, slow_stop=1)
+    TurningPID_abs(-44)
+    StraightPID_abs(-44, 33.5, 45)
+
+    #Hybrid Car mission
+    RightArm.run_for_degrees(-250, 100)
+
+    #Back to Base
+    motor_pair.move_tank(5, "seconds", -40, -40)
+
+def trip_2():
+    StraightPID_abs(0, 45, 40, 40)
+    wait_for_seconds(1)
+    motor_pair.move_tank(2.5, "seconds", -40, -40)
+
+#Whole run
 initialize()
-trip_4()
+#trip_1()
+trip_2()

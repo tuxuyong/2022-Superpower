@@ -377,7 +377,7 @@ def StraightPID_double(degree_abs, dist, speed, slow_stop=1, Kp=1, Ki=0.05, Kd=0
     motor_pair.stop()
     motor_pair = MotorPair(LeftMotorSym, RightMotorSym)
 
-def TurningPID_abs(degree_abs, Kp=2, Ki=0.01, Kd=5, MinPower=25, MaxPower=35):
+def TurningPID_abs(degree_abs, Kp=2, Ki=0.01, Kd=5, MinPower=20, MaxPower=35):
     '''
     Turning with PID using power
 
@@ -435,7 +435,7 @@ def Turn(degree):
     wait_for_seconds(0.3)
     TurningPID_abs(degree)
 
-def TurningPID_l(degree_abs, Kp=2, Ki=0.01, Kd=5, MinPower=25, MaxPower=35):
+def TurningPID_l(degree_abs, Kp=2, Ki=0.01, Kd=5, MinPower=20, MaxPower=35):
     global a_Error, Pre_Error, motor_pair
     RightMotor.set_stop_action("brake")
     RightMotor.stop()
@@ -484,7 +484,7 @@ def Turn_l(degree):
     wait_for_seconds(0.3)
     TurningPID_l(degree)
 
-def TurningPID_r(degree_abs, Kp=2, Ki=0.01, Kd=5, MinPower=25, MaxPower=35):
+def TurningPID_r(degree_abs, Kp=2, Ki=0.01, Kd=5, MinPower=20, MaxPower=35):
     global a_Error, Pre_Error, motor_pair
     LeftMotor.set_stop_action("brake")
     LeftMotor.stop()
@@ -586,9 +586,9 @@ def PowerPlant():
     Turn_l(112)
     StraightPID_right(112, 15, 35)
     Run2line('Right', 30, 'Forward', 'black')
-    StraightPID_right(110, 3.5, 35)
-    Turn_l(178)
-    StraightPID_right(178, 30, 35)
+    StraightPID_right(112, 5.5, 35)
+    Turn_l(182)
+    StraightPID_right(182, 30, 35)
     Turn(178)
     StraightPID_right(178, 12, 50, slow_stop=0)
     StraightPID_right(178, -4, 40)
