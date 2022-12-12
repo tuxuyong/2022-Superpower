@@ -1,4 +1,4 @@
-# LEGO type:standard slot:8 autostart
+# LEGO type:standard slot:3 autostart
 
 # New idea to combine Trip 2 and Trip 3
 from spike import PrimeHub, LightMatrix, Button, StatusLight, ForceSensor, MotionSensor, Speaker, ColorSensor, App, DistanceSensor, Motor, MotorPair
@@ -435,7 +435,7 @@ def Turn(degree):
     wait_for_seconds(0.3)
     TurningPID_abs(degree)
 
-def TurningPID_l(degree_abs, Kp=2, Ki=0.01, Kd=5, MinPower=25, MaxPower=35):
+def TurningPID_l(degree_abs, Kp=2, Ki=0.01, Kd=5, MinPower=28, MaxPower=40):
     global a_Error, Pre_Error, motor_pair
     RightMotor.set_stop_action("brake")
     RightMotor.stop()
@@ -484,7 +484,7 @@ def Turn_l(degree):
     wait_for_seconds(0.3)
     TurningPID_l(degree)
 
-def TurningPID_r(degree_abs, Kp=2, Ki=0.01, Kd=5, MinPower=25, MaxPower=35):
+def TurningPID_r(degree_abs, Kp=2, Ki=0.01, Kd=5, MinPower=28, MaxPower=40):
     global a_Error, Pre_Error, motor_pair
     LeftMotor.set_stop_action("brake")
     LeftMotor.stop()
@@ -725,56 +725,8 @@ def Linesquaring(targetcolor='Black', targetintensity=50, int_range=5, direction
 
     motor_pair = MotorPair(LeftMotorSym, RightMotorSym)
 
-""" def trip_1():
-    StraightPID_right(0, 20, 35)
-    Turn_l(15)
-    StraightPID_right(15, 14, 35)
-    Turn_r(-25)
-    StraightPID_right(-25, 2, 30, slow_stop=0)
-    Turn_l(20)
-    StraightPID_right(20, 20, 35)
-    Turn_l(45)
-    StraightPID_right(45, 21, 35)
-    Turn(90)
-    StraightPID_right(90, 14, 35)
-    Turn_l(112)
-    StraightPID_right(112, 16, 35)
-    Run2line('Right', 30, 'Forward', 'black')
-    StraightPID_right(112, 5.5, 35)
-    Turn_l(-178)
-    StraightPID_right(-178, 30, 35)
-    #Turn(-178)
-    StraightPID_right(-178, 13.8, 50, slow_stop=0)
-    StraightPID_right(-178, -4, 40)
-    Turn(-115)
-    StraightPID_right(-115, 70, 80)
-    
-def trip_2():
-    #Navivagting to Hydroelectric Dam
-    StraightPID_right(0, 75, 30)
-    Run2line("Right", 30, "Forward", "black")
-    Turn(-90)
-    #wait_for_seconds(0.5)
-    StraightPID_right(-90, 23, 30)
-    Turn(136)
-    #wait_for_seconds(0.5)
-    
-    #Hydroelectric Dam
-    motor_pair.move_tank(2, "seconds", 15, 15)
-    wait_for_seconds(0.3)
-    
-    #Back to Base 
-    StraightPID_right(142, -20, 35)
-    Turn_l(120)
-    StraightPID_right(120, 35, 50)
-    Turn_l(160)
-    StraightPID_left(160, 70, 50)
-    # Turn_l(90)
-    # StraightPID_right(90, 33, 40)
-    # Turn_l(180)
-    # StraightPID_left(180, 70, 80)
 
-def trip_3():
+def trip_1():
     #Push the television and go back
     # motor_pair.move_tank(2.5, "seconds", 30, 30)
     # motor_pair.move_tank(5, "cm", -30, -30)
@@ -783,68 +735,67 @@ def trip_3():
     #Navigate to windmill
     Turn(-45)
     StraightPID_double(-45, 39, 40)
-    Turn(43)
+    Turn(42)
 
     #Windmill mission
     i = 1
     while i<4:
         #motor_pair.move_tank(25, "cm", 60, 60)
-        StraightPID_double(43, 11, 50, slow_stop=0)
+        StraightPID_double(42, 11, 50, slow_stop=0)
         wait_for_seconds(0.3)
-        StraightPID_double(43, -8, 40)
+        StraightPID_double(42, -8, 40)
         wait_for_seconds(0.3)
         i = i+1
 
     #Navigating to Hybrid Car & doing Rechargable Battery
     motor_pair.move_tank(1.5, "seconds", -45, -45)
-    StraightPID_double(43, 1, 45)
+    StraightPID_double(42, 1.5, 45)
     
-    Turn(-44)
-    StraightPID_right(-44, 32, 30) 
-    #Turn(-43)
-    #StraightPID_right(-43, 15.5, 28)
+    Turn(-43)
+    StraightPID_right(-43, 32, 30) 
+    # Turn(-43)
+    # StraightPID_right(-43, 15.5, 28)
     RightArm.run_for_degrees(-250, 100)
     wait_for_seconds(1)
     StraightPID_left(-43, -105, 50)   
     
-def trip_4():
-    StraightPID_double(0, 48, 40)
-    wait_for_seconds(1)
-    motor_pair.move_tank(2.5, "seconds", -40, -40)
-
-def trip_5():
-    # push innovation project
-    StraightPID_right(0, 72, 40)
-    Turn(45)
-    StraightPID_right(45, 35, 40)
-    StraightPID_right(45, -7, 40)
-    # Hand
+def trip_2():
+    # Toy factory
+    StraightPID_right(0, -41, 40)
+    wait_for_seconds(0.5)
+    StraightPID_double(0, 13, 40)
+    Turn(135) 
+    StraightPID_right(135, 41, 40)
+    # Find black line and get ready do Hand
+    Run2line('Left', 30, 'Forward', 'black')
+    wait_for_seconds(0.3)
+    Linesquaring('White', 50, 5, 'Forward')
+    wait_for_seconds(0.3)
+    MotionSensor.reset_yaw_angle()
+    #wait_for_seconds(0.3)
+    
+    StraightPID_right(0, 8, 40)
     Turn(90)
-    
-    StraightPID_double(90, 36, 60)
-    StraightPID_double(90, -10, 40)
-    
-    # square
-    Run2line()
-    #wait_for_seconds(1)
-    #Linesquaring("White", 50, 4, "Forward")
-    # solar farm
-    StraightPID_right(90, -12, 40)
-    Turn_r(31)
-    StraightPID_right(31, 38, 40)
-    Turn_l(0)
-    StraightPID_right(0, -10, 40)
-    wait_for_seconds(0.2)
-    LeftArm.run_for_rotations(0.6, -100)
-    Turn(-2)
-    StraightPID_double(-2, 27, 40)
-    LeftArm.run_for_rotations(0.6, 100)
-    Turn_l(-10)
-    StraightPID_right(-10, -3, 30)
-    Turn(-55)
-    StraightPID_right(-55, 80, 70) 
+    StraightPID_right(90, 40, 35, slow_stop=0)
+    #StraightPID_double(90, 10, 35)
+    # #wait_for_seconds(0.3)
+    StraightPID_right(90, -38, 40)
+    Turn(60)
+    StraightPID_right(60, 15, 35)
+    Turn(80)
+    StraightPID_right(80, 34, 40)
+    Turn_r(22)
+    StraightPID_right(22, 15, 35)
+    Turn_r(-50)
+    StraightPID_right(-50, 58, 40)
+    StraightPID_right(-50, -10, 40)
+    Turn_l(-120)
+    StraightPID_right(-120, 12, 35)
+    Turn(-45)
+    StraightPID_right(-45, 45, 40)
 
-def trip_6():
+   
+def trip_3():
     hitangle = -15
     
     StraightPID_double(0, 55, 40)
@@ -854,135 +805,70 @@ def trip_6():
     wait_for_seconds(0.5)
     StraightPID_double(hitangle, -4, 30)
     wait_for_seconds(0.5)
-    for i in range(3):
+    for i in range(2):
         StraightPID_left(hitangle, 5, 50, slow_stop=0)
         wait_for_seconds(0.5)
         StraightPID_double(hitangle, -4, 30, slow_stop=0)
         wait_for_seconds(0.5)
 
     
-    StraightPID_double(hitangle+5, -35, 40)
-    StraightPID_double(0, -50, 50)"""
+    StraightPID_right(hitangle+5, -35, 40)
+    StraightPID_right(0, -50, 50)
 
-
-    
-# def trip_2():
-#     # Toy factory
-#     StraightPID_right(0, -41, 40)
-#     wait_for_seconds(0.5)
-#     StraightPID_double(0, 13, 40)
-#     Turn(135) 
-#     StraightPID_right(135, 41, 40)
-#     # Find black line and get ready do Hand
-#     Run2line('Left', 30, 'Forward', 'black')
-#     wait_for_seconds(0.3)
-#     Linesquaring('White', 30, 5, 'Forward')
-#     wait_for_seconds(0.3)
-#     MotionSensor.reset_yaw_angle()
-#     #wait_for_seconds(0.3)
-    
-#     StraightPID_right(0, 8, 40)
-#     Turn(90)
-#     StraightPID_right(90, 30, 40)
-#     StraightPID_right(90, 10, 35)
-#     # #wait_for_seconds(0.3)
-#     StraightPID_right(90, -38, 40)
-#     Turn(60)
-#     StraightPID_right(60, 15, 35)
-#     Turn(80)
-#     StraightPID_right(80, 32, 40)
-#     Turn_r(22)
-#     StraightPID_right(22, 14, 35)
-#     Turn_r(-50)
-#     StraightPID_right(-50, 65, 40)
-#     StraightPID_right(-50, -16, 40)
-#     Turn_l(-120)
-#     StraightPID_right(-120, 12, 35)
-#     Turn(-45)
-#     StraightPID_right(-45, 40, 40)
-
-def trip_3():
+def trip_4():
     # Water reservoir
-    StraightPID_right(0, -10, 40)
-    Turn_l(-10)
-    StraightPID_right(-10, -15, 35)
     
+    # reverse and push innovation project
+    StraightPID_right(0, -10, 40)
+    Turn_l(-13)
+    StraightPID_right(-13, -15, 35)
     Turn_l(-25)
     StraightPID_right(-25, -15, 35)
-    Turn_l(-47)
-    StraightPID_right(-47, -45, 35)
+    Turn_l(-48)
+    StraightPID_right(-48, -45, 35)
     
+    # approach to water reservoir
     Turn_l(-20)
     StraightPID_right(-20, 12, 35)
-    # Turn_r(-20)
-    # StraightPID_right(-20, 3, 35)
+    
     Turn_r(-32)
-    StraightPID_right(-32, 8, 30)
+    StraightPID_right(-32, 9, 30)
     #motor_pair.move_tank(2, "seconds", 15, 15)
-    wait_for_seconds(1)
+    wait_for_seconds(0.5)
     
     
     StraightPID_right(-32, -22, 30)
     Turn(-90)
-    StraightPID_right(-90, 20, 40)
-    Turn(-90)
-    StraightPID_double(-90, 10, 40, slow_stop=0)
-    wait_for_seconds(0.5)
+    StraightPID_right(-90, 30, 35)
+    #Turn(-90)
+    #StraightPID_double(-90, 10, 45, slow_stop=0)
+    wait_for_seconds(1)
     StraightPID_right(-90, -5, 35)
-    Turn(0)
-    StraightPID_right(0, 50, 40)
+    Turn(-30)
+    StraightPID_right(-30, 75, 40)
     # Run2line('Left', 30, 'Forward', 'black')
-    
-    
-    # Run2line('Left', 30, 'Forward', 'black')
-    # StraightPID_right(20, 8, 40)
-    # Turn(90)
-    # StraightPID_right(90, 38, 40)
-    # #wait_for_seconds(0.3)
-    # StraightPID_right(90, -40, 40)
-    # Turn(58)
-    # StraightPID_right(58, 16, 35)
-    # Turn(80)
-    # StraightPID_right(80, 35, 40)
-    # Turn_r(22)
-    # StraightPID_double(22, 15, 35)
-    # Turn_r(-50)
-    # StraightPID_right(-50, 65, 40)
-    # StraightPID_right(-50, -18, 40)
-    # Turn_l(-125)
-    # StraightPID_right(-125, 5, 35)
-    # Turn(-45)
-    # StraightPID_right(-45, 30, 40) 
+
+# wait()
+# initialize()
+# trip_inprogress()
+# trip_1()
+# done()  
 
 # wait()
 # initialize()
 # trip_inprogress()
 # trip_2()
 # done()  
-  
+
 wait()
 initialize()
 trip_inprogress()
 trip_3()
 done()  
-    
 
+wait()
+initialize()
+trip_inprogress()
+trip_4()
+done()  
 
-
-# wait()
-# initialize()
-# trip_inprogress()
-# trip_4()
-# done()
-
-# wait()
-# initialize()
-# trip_inprogress()
-# trip_5()
-# done()
-
-# wait()
-# initialize()
-# trip_inprogress()
-# trip_6()
-# done()
